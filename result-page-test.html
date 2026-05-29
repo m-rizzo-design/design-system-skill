@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audit DS — Matias Rizzo / Follow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --c-bg: #fff;
+      --c-panel: #f7f7f7;
+      --c-surface: rgba(17, 17, 17, 0.03);
+      --c-surface-2: rgba(17, 17, 17, 0.06);
+      --c-track: rgba(17, 17, 17, 0.12);
+      --c-line: rgba(17, 17, 17, 0.12);
+      --c-text: #111;
+      --c-text-muted: rgba(17, 17, 17, 0.65);
+      --c-text-faint: rgba(17, 17, 17, 0.45);
+      --c-blue: #2383e2;
+      --c-green: #22c55e;
+      --c-yellow: #eab308;
+      --c-red: #ef4444;
+      --c-warn: #856400;
+      --radius-tag: 4px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "Roboto Condensed", "Arial Narrow", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 40px 24px 80px;
+    }
+    .page { max-width: 900px; margin: 0 auto; }
+    code {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.92em;
+      background: var(--c-surface-2);
+      padding: 0.1em 0.35em;
+    }
+
+    /* Hero */
+    .hero-top {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 720px) { .hero-top { flex-direction: column; } }
+    .hero-panel {
+      background: var(--c-panel);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .hero-panel.context { flex: 0 0 416px; max-width: 100%; }
+    .hero-panel.score { flex: 1; min-width: 0; }
+    .hero-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--c-text);
+    }
+    .hero-title {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 48px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--c-text);
+    }
+    .stats-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      font-size: 16px;
+      line-height: 24px;
+      color: var(--c-text);
+    }
+    .stat-row span:last-child { text-align: right; white-space: nowrap; }
+    .stat-divider { height: 1px; background: var(--c-line); border: none; }
+    .score-gauge {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 250px;
+      padding: 32px 0;
+    }
+    .score-ring {
+      position: absolute;
+      width: 214px;
+      height: 214px;
+      border-radius: 50%;
+      background: conic-gradient(var(--c-blue) 0deg 223deg, var(--c-track) 223deg 360deg);
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+    }
+    .score-number {
+      position: relative;
+      z-index: 1;
+      font-size: 80px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--c-blue);
+      font-family: "Roboto Condensed", sans-serif;
+    }
+    .score-label {
+      position: relative;
+      z-index: 1;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.065em;
+      color: var(--c-blue);
+      margin-top: 5px;
+    }
+    .model-prescription {
+      font-size: 16px;
+      line-height: 24px;
+      color: var(--c-text);
+    }
+    .model-prescription strong { font-weight: 600; }
+
+    /* Blocks */
+    .block { margin-bottom: 16px; }
+    .reference-block {
+      background: var(--c-surface);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .reference-block .ref-intro { font-size: 15px; color: var(--c-text-muted); line-height: 24px; }
+    .reference-block .ref-name {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 32px;
+      line-height: 1.6;
+      color: var(--c-text);
+    }
+    .diff-list { list-style: none; padding-top: 5px; }
+    .diff-list li {
+      font-size: 16px;
+      color: var(--c-text-muted);
+      line-height: 25.6px;
+      padding: 6px 0 7px;
+      border-bottom: 1px solid var(--c-line);
+      display: flex;
+      gap: 8px;
+    }
+    .diff-list li:last-child { border-bottom: none; }
+    .diff-list li::before { content: "↳"; color: var(--c-text-faint); flex-shrink: 0; }
+
+    .target-direction {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 600px) { .target-direction { flex-direction: column; } }
+    .td-pole {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .td-pole.current { background: var(--c-surface); }
+    .td-pole.target { background: var(--c-blue); }
+    .td-pole-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      line-height: 20.8px;
+    }
+    .td-pole.current .td-pole-label { color: var(--c-text-muted); }
+    .td-pole.target .td-pole-label { color: rgba(255, 255, 255, 0.65); }
+    .td-pole-model {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-style: italic;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+    .td-pole.current .td-pole-model { color: var(--c-text); }
+    .td-pole.target .td-pole-model { color: #fff; }
+
+    /* Sections */
+    .section { margin-bottom: 48px; }
+    .section-title {
+      font-size: 13px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--c-text-muted);
+      margin-bottom: 20px;
+      padding-bottom: 0;
+      font-family: "Roboto Condensed", sans-serif;
+    }
+    .section-title span { color: var(--c-text-faint); margin-right: 12px; }
+    .section-heading {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 48px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--c-text);
+      padding: 40px 0 8px;
+      margin-bottom: 8px;
+    }
+
+    .exec-summary {
+      background: var(--c-surface);
+      padding: 24px 28px;
+      margin-bottom: 16px;
+    }
+    .exec-summary p { font-size: 18px; line-height: 1.55; color: var(--c-text); margin-bottom: 8px; }
+    .exec-summary p:last-child { margin-bottom: 0; }
+
+    .model-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .model-badge {
+      background: var(--c-surface);
+      padding: 16px 20px;
+      flex: 1;
+      min-width: calc(50% - 8px);
+    }
+    @media (max-width: 600px) { .model-badge { min-width: 100%; } }
+    .model-badge .badge-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--c-text-faint);
+      margin-bottom: 16px;
+    }
+    .model-badge .badge-value {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 24px;
+      line-height: 1.2;
+      color: var(--c-text);
+      margin-bottom: 16px;
+    }
+    .model-badge .badge-evidence {
+      font-size: 12px;
+      color: var(--c-text-muted);
+      line-height: 1.45;
+    }
+
+    .subscores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 600px) { .subscores { grid-template-columns: 1fr; } }
+    .subscore-card { background: var(--c-surface); padding: 20px; }
+    .subscore-card .axis-name { font-size: 13px; color: var(--c-text-muted); margin-bottom: 16px; line-height: 21px; }
+    .subscore-card .axis-score {
+      font-size: 36px;
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 16px;
+      font-family: "Roboto Condensed", sans-serif;
+    }
+    .subscore-card .axis-weight { font-size: 13px; color: var(--c-text-faint); margin-bottom: 8px; line-height: 21px; }
+    .score-bar-track { height: 4px; background: var(--c-track); overflow: hidden; margin-bottom: 16px; }
+    .score-bar-fill { height: 100%; }
+    .subscore-card .axis-impact { font-size: 12px; color: var(--c-text-muted); line-height: 1.45; }
+
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      background: var(--c-surface);
+    }
+    .ap-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1100px; }
+    .ap-table th {
+      text-align: left;
+      font-size: 13px;
+      color: var(--c-text-muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--c-line);
+      background: var(--c-surface-2);
+      white-space: nowrap;
+    }
+    .ap-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--c-line);
+      color: var(--c-text-muted);
+      vertical-align: top;
+      line-height: 1.45;
+    }
+    .ap-table tr:last-child td { border-bottom: none; }
+    .ap-table .col-ap { font-family: "SF Mono", "Fira Code", monospace; font-size: 12px; color: var(--c-text-faint); white-space: nowrap; }
+    .ap-table .col-name { color: var(--c-text); font-weight: 500; min-width: 160px; }
+    .nivel-tag {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 2px 8px;
+      border-radius: var(--radius-tag);
+      white-space: nowrap;
+    }
+    .nivel-tag.alta  { background: var(--c-red); color: #fff; }
+    .nivel-tag.media { background: var(--c-yellow); color: #111; }
+    .nivel-tag.baja  { background: var(--c-green); color: #111; }
+
+    .not-touch-card {
+      background: var(--c-surface);
+      padding: 24px 20px;
+      margin-bottom: 12px;
+    }
+    .not-touch-card .nt-title {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 24px;
+      color: var(--c-text);
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+    .not-touch-card .nt-reason { font-size: 16px; color: var(--c-text-muted); margin-bottom: 16px; line-height: 1.45; }
+    .not-touch-card .nt-when { font-size: 16px; color: var(--c-text-faint); line-height: 1.45; }
+    .not-touch-card .nt-when strong { color: var(--c-text-muted); }
+
+    .plan-phase {
+      background: var(--c-surface);
+      padding: 30px 24px 22px;
+      margin-bottom: 12px;
+    }
+    .plan-meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 11px; }
+    .phase-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--c-surface-2);
+      border-radius: var(--radius-tag);
+      padding: 3px 8px;
+      font-size: 13px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--c-text-muted);
+    }
+    .phase-chip strong { font-weight: 700; }
+    .deliverable-tag {
+      font-size: 12px;
+      background: var(--c-surface-2);
+      border-radius: var(--radius-tag);
+      padding: 2px 8px;
+      color: var(--c-text-muted);
+    }
+    .plan-phase .phase-name {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 24px;
+      color: var(--c-text);
+      margin-bottom: 11px;
+      letter-spacing: 0.02em;
+    }
+    .plan-phase .phase-duration { font-size: 16px; color: var(--c-text-muted); margin-bottom: 11px; }
+    .plan-task-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .plan-task-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--c-text-muted);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--c-line);
+      line-height: 20.8px;
+    }
+    .plan-task-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .task-check {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      border: 1.5px solid var(--c-text-faint);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--c-text);
+    }
+    .task-check.done { background: var(--c-text); border-color: var(--c-text); color: #fff; }
+    .plan-deliverables { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--c-line); }
+    .plan-risk { margin-top: 12px; font-size: 12px; color: var(--c-warn); line-height: 19.2px; opacity: 0.8; }
+
+    .effort-summary {
+      background: var(--c-surface);
+      padding: 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .effort-item dt { font-size: 13px; color: var(--c-text-muted); margin-bottom: 4px; line-height: 21px; }
+    .effort-item dd { font-size: 18px; color: var(--c-text); font-family: "Roboto Condensed", sans-serif; }
+
+    .roi-hero { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 600px) { .roi-hero { grid-template-columns: 1fr; } }
+    .roi-stat { background: var(--c-surface); padding: 17px 20px; text-align: center; }
+    .roi-stat .roi-label { font-size: 13px; color: var(--c-text-muted); margin-bottom: 8px; line-height: 21px; }
+    .roi-stat .roi-value { font-size: 28px; font-weight: 400; color: var(--c-blue); font-family: "Roboto Condensed", sans-serif; line-height: 1.2; }
+    .roi-stat .roi-sub { font-size: 12px; color: var(--c-text-muted); margin-top: 4px; line-height: 20px; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--c-surface); }
+    .data-table th {
+      text-align: left;
+      font-size: 12px;
+      color: var(--c-text-muted);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--c-line);
+      font-weight: 400;
+    }
+    .data-table td { padding: 10px 12px; border-bottom: 1px solid var(--c-line); color: var(--c-text-muted); vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .val-highlight { color: var(--c-text); font-weight: 500; }
+
+    .metrics-panel { background: var(--c-surface); padding: 15px 18px 16px; }
+    .metrics-head, .metrics-row {
+      display: grid;
+      grid-template-columns: 300px 50px 170px 1fr;
+      gap: 8px;
+      align-items: center;
+      font-size: 16px;
+      color: var(--c-text-muted);
+    }
+    @media (max-width: 700px) {
+      .metrics-head, .metrics-row { grid-template-columns: 1fr; gap: 4px; }
+    }
+    .metrics-head { padding-bottom: 8px; border-bottom: 1px solid var(--c-line); margin-bottom: 8px; }
+    .metrics-row { padding: 8px 0; border-bottom: 1px solid var(--c-line); }
+    .metrics-row:last-child { border-bottom: none; }
+    .metric-before { font-size: 15px; color: var(--c-text-faint); text-decoration: line-through; }
+    .metric-after { font-size: 15px; color: var(--c-blue); }
+    .metric-how { font-size: 15px; color: var(--c-text-faint); line-height: 20.8px; }
+
+    .action-plan-summary {
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--c-text-muted);
+      margin-bottom: 12px;
+    }
+    .steps-panel { background: var(--c-surface); padding: 27px 24px; }
+    .action-plan-list { list-style: none; }
+    .action-plan-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--c-line);
+      font-size: 16px;
+      color: var(--c-text-muted);
+      line-height: 20px;
+    }
+    .action-plan-list li:last-child { border-bottom: none; }
+    .action-plan-list .step-task { flex: 1; min-width: 0; }
+    .action-plan-list .step-period {
+      font-size: 13px;
+      color: var(--c-text-faint);
+      text-transform: lowercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .action-plan-list li.step-note {
+      padding-left: 28px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--c-warn);
+      opacity: 0.9;
+    }
+    .action-plan-list li.step-note .step-period { display: none; }
+
+    .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .scope-grid { grid-template-columns: 1fr; } }
+    .scope-col { background: var(--c-surface); padding: 15px 18px; }
+    .scope-col h4 { font-size: 12px; color: var(--c-text-muted); margin-bottom: 10px; font-family: "Roboto Condensed", sans-serif; }
+    .scope-col ul { list-style: none; }
+    .scope-col ul li { font-size: 13px; color: var(--c-text-muted); padding: 6px 0; border-bottom: 1px solid var(--c-line); line-height: 21px; }
+    .scope-col ul li:last-child { border-bottom: none; }
+    .scope-col ul li.covered::before  { content: "✓ "; color: var(--c-green); }
+    .scope-col ul li.excluded::before { content: "✗ "; color: var(--c-red); opacity: 0.6; }
+    .scope-note { margin-top: 16px; font-size: 12px; color: var(--c-text-faint); line-height: 20px; }
+
+    .signature {
+      background: var(--c-surface);
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .sig-left .auditor-name { font-family: "Instrument Serif", Georgia, serif; font-size: 16px; color: var(--c-text); margin-bottom: 2px; }
+    .sig-left .auditor-org, .sig-left .auditor-email { font-size: 13px; color: var(--c-text-muted); line-height: 21px; }
+    .sig-right { text-align: right; }
+    .sig-right .sig-detail { font-size: 12px; color: var(--c-text-faint); margin-bottom: 4px; line-height: 20px; }
+    .sig-right .sig-version { font-size: 13px; font-family: "SF Mono", "Fira Code", monospace; color: var(--c-text-faint); }
+
+    .download-block {
+      background: var(--c-panel);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .download-intro { font-size: 16px; line-height: 1.5; color: var(--c-text-muted); max-width: 52ch; }
+    .download-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+    .download-btn {
+      font-family: "Roboto Condensed", sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #fff;
+      background: var(--c-blue);
+      border: none;
+      padding: 10px 18px;
+      cursor: pointer;
+    }
+    .download-btn:hover { opacity: 0.92; }
+    .download-link { font-size: 14px; color: var(--c-blue); text-decoration: underline; text-underline-offset: 3px; }
+
+    @media print { body { padding: 20px; } .download-block { display: none; } }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Hero: context + score -->
+  <div class="hero-top block">
+    <div class="hero-panel context">
+      <div>
+        <div class="hero-eyebrow">Design System Audit</div>
+        <div class="hero-title">Follow</div>
+      </div>
+      <div class="stats-list">
+        <div class="stat-row"><span>Designers</span><span>1</span></div>
+        <hr class="stat-divider" />
+        <div class="stat-row"><span>Frontend engineers</span><span>—</span></div>
+        <hr class="stat-divider" />
+        <div class="stat-row"><span>Full-stack engineers</span><span>—</span></div>
+        <hr class="stat-divider" />
+        <div class="stat-row"><span>Phase</span><span>Pre-seed</span></div>
+        <hr class="stat-divider" />
+        <div class="stat-row"><span>Amount of apps</span><span>2</span></div>
+        <hr class="stat-divider" />
+        <div class="stat-row"><span>Platforms</span><span>Web + service-web</span></div>
+      </div>
+    </div>
+    <div class="hero-panel score">
+      <div class="hero-eyebrow">Health score</div>
+      <div class="score-gauge">
+        <div class="score-ring" aria-hidden="true"></div>
+        <div class="score-number">62</div>
+        <div class="score-label">Acceptable</div>
+      </div>
+      <p class="model-prescription">Given you're <strong>pre-seed</strong>, with <strong>one designer</strong>, <strong>two web surfaces</strong> (Tauri app + service-web), and <strong>no native mobile</strong> on the roadmap, you should stay on <strong>semantic-first (mature) + clean centralized</strong> — not a full primitive hybrid yet — because a single brand and tokens like <code>--ink</code> / <code>--bg</code> already fit your stack, while today's real cost is drift between <code>design-system/</code> and the manual copy in <code>service-web</code>, not missing gray scales. Move to the next level only when a concrete trigger appears: <strong>dark mode in the next 6 months</strong>, a <strong>confirmed rebrand</strong>, or a <strong>second product with its own visual identity</strong>.</p>
+    </div>
+  </div>
+
+  <div class="reference-block block">
+    <div class="ref-intro">Your system is closest to:</div>
+    <div class="ref-name">GitHub Primer ~2014 / early Vercel Geist</div>
+    <ul class="diff-list">
+      <li>You already use semantic names (<code>--ink</code>) instead of primitive scales (gray-900) — right call for a single brand</li>
+      <li>Missing a single pipeline: GitHub/Shopify generate CSS from one source; here service-web is a manual copy</li>
+      <li>Tailwind v4 is in package.json but unused — CSS Modules + pure DS fits Tauri well</li>
+      <li>No React component layer in the DS — CSS only (normal at pre-seed)</li>
+      <li>Page sections (DealFinancePanel 819 LOC) exceed reusable components — monolithic app pattern, not a DS library</li>
+    </ul>
+  </div>
+
+  <div class="target-direction block">
+    <div class="td-pole current">
+      <div class="td-pole-label">Current model</div>
+      <div class="td-pole-model">Semantic-first (immature) + unstable centralized hybrid</div>
+    </div>
+    <div class="td-pole target">
+      <div class="td-pole-label">Target model</div>
+      <div class="td-pole-model">Semantic-first (mature) + clean centralized</div>
+    </div>
+  </div>
+
+  <section class="section">
+    <h2 class="section-heading">ROI estimated</h2>
+    <div class="roi-hero">
+      <div class="roi-stat">
+        <div class="roi-label">Projected annual savings</div>
+        <div class="roi-value">~€4.800</div>
+        <div class="roi-sub">design + dev + QA (founder only)</div>
+      </div>
+      <div class="roi-stat">
+        <div class="roi-label">Payback period</div>
+        <div class="roi-value">3–4</div>
+        <div class="roi-sub">months to recover investment</div>
+      </div>
+      <div class="roi-stat">
+        <div class="roi-label">Year 1 ROI</div>
+        <div class="roi-value">~160%</div>
+        <div class="roi-sub">on ~€3,000 implementation cost</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Area</th>
+            <th>Est. savings/year</th>
+            <th>Base assumption</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="val-highlight">Global visual changes</td>
+            <td>€1.800</td>
+            <td>6 rebrands/year × 3 h saved × €100/h</td>
+            <td>Spotify Encore — rebrand in minutes vs months</td>
+          </tr>
+          <tr>
+            <td class="val-highlight">Dev UI</td>
+            <td>€2.000</td>
+            <td>~25 h/year × €80/h — less grep and chrome bugs</td>
+            <td>Sparkbox + Carbon — 47% build time</td>
+          </tr>
+          <tr>
+            <td class="val-highlight">QA visual</td>
+            <td>€600</td>
+            <td>12 releases × 0.5 h</td>
+            <td>Shopify Polaris — cross-surface consistency</td>
+          </tr>
+          <tr>
+            <td class="val-highlight">Time-to-market features</td>
+            <td>€400</td>
+            <td>2 features/year × 2 h</td>
+            <td>Atlassian DS — 40% faster onboarding</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <h2 class="section-heading">Diagnosis</h2>
+
+  <div class="exec-summary block">
+    <p>The monorepo has a solid semantic core for its stage (<code>--ink</code>, <code>--bg</code>, <code>--muted</code> in <code>design-system/</code>), but the app and landing still have ~43% literal values and three sources of truth that have already diverged.</p>
+    <p>The main opportunity is not “more tokens”, but consolidating a single source (remove the copy in <code>service-web</code>), unify accents (<code>--color-primary</code> vs <code>#2383e2</code>) and split <code>AppChrome.tsx</code> (888 LOC).</p>
+    <p>Estimated effort: 0.4–0.6 person-months over 4–6 weeks, compatible with parallel product development.</p>
+  </div>
+
+  <div class="model-row block">
+    <div class="model-badge">
+      <div class="badge-label">Token strategy</div>
+      <div class="badge-value">Semantic-first (immature)</div>
+      <div class="badge-evidence">11 global tokens --ink/--bg/--muted; +60 local tokens (--qt-*, --score-fill); 286 hex vs 376 var() in app/src</div>
+    </div>
+    <div class="model-badge">
+      <div class="badge-label">Code architecture</div>
+      <div class="badge-value">Centralized + co-located (hybrid)</div>
+      <div class="badge-evidence">@matias-rizzo/design-system exports style.css; app imports via index.css; service-web duplicates assets/css/</div>
+    </div>
+  </div>
+
+  <div class="subscores block">
+    <div class="subscore-card">
+      <div class="axis-name">Tokens</div>
+      <div class="axis-score" style="color: #eab308">52</div>
+      <div class="axis-weight">Weight: 50%</div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width: 52%; background: #eab308"></div>
+      </div>
+      <div class="axis-impact">43% literals in app; drift between design-system and service-web in tokens.css and button.css</div>
+    </div>
+    <div class="subscore-card">
+      <div class="axis-name">Components</div>
+      <div class="axis-score" style="color: #eab308">64</div>
+      <div class="axis-weight">Weight: 30%</div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width: 64%; background: #eab308"></div>
+      </div>
+      <div class="axis-impact">AppChrome 888 LOC; 17 files with inline styles; extensive props on shell</div>
+    </div>
+    <div class="subscore-card">
+      <div class="axis-name">Architecture</div>
+      <div class="axis-score" style="color: #22c55e">71</div>
+      <div class="axis-weight">Weight: 20%</div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" style="width: 71%; background: #22c55e"></div>
+      </div>
+      <div class="axis-impact">Centralized npm package is correct; unstable hybrid due to co-located + static copy</div>
+    </div>
+  </div>
+
+  <h2 class="section-heading">Anti-patterns detected</h2>
+
+  <div class="table-wrap block">
+    <table class="ap-table">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th>AP</th>
+          <th>Anti pattern</th>
+          <th>What it is</th>
+          <th>Where it appears</th>
+          <th>Velocity</th>
+          <th>QA</th>
+          <th>Tech debt</th>
+          <th>Risk</th>
+          <th>Effort</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="nivel-tag alta">High</span></td>
+          <td class="col-ap">AP-05</td>
+          <td class="col-name">Fragmented token sources</td>
+          <td>Same token types defined in ≥3 locations without a unified build.</td>
+          <td>3 sources: <code>design-system/src/css/base/tokens.css</code>, <code>app/src/index.css</code> (<code>--color-primary*</code>), <code>service-web/assets/css/base/tokens.css</code> (diff: <code>--font-serif</code>, <code>--background</code>/<code>--foreground</code>). <code>button.css</code> and <code>accessibility.css</code> also differ.</td>
+          <td>−15% on global brand changes</td>
+          <td>+2–4 h per visual release</td>
+          <td>0.15 PM accumulated/year</td>
+          <td>Landing and app misaligned after rebrand</td>
+          <td>1 week — copy script or import from DS in service-web build</td>
+        </tr>
+        <tr>
+          <td><span class="nivel-tag alta">High</span></td>
+          <td class="col-ap">AP-01</td>
+          <td class="col-name">Mixed levels in the same context</td>
+          <td>DS semantic tokens, app aliases, and loose hex values coexist for the same visual role.</td>
+          <td><code>--ink</code> (#111) vs <code>--color-primary</code> (#111111) vs <code>#2383e2</code> in ScoreBar/OutreachFitGauge; <code>rgba(17,17,17,0.05)</code> hardcoded in <code>.app-table</code> despite <code>--border</code>.</td>
+          <td>Accent change requires multi-pattern grep</td>
+          <td>Blue score vs black brand inconsistency</td>
+          <td>0.1 PM</td>
+          <td>Dark mode blocked without semantic refactor</td>
+          <td>3–5 days — map <code>--color-action-*</code> → <code>--ink</code> / <code>--score-*</code></td>
+        </tr>
+        <tr>
+          <td><span class="nivel-tag media">Medium</span></td>
+          <td class="col-ap">AP-06</td>
+          <td class="col-name">God Component (shell)</td>
+          <td>Component with LOC &gt;500, many props and layout + nav + modal responsibilities.</td>
+          <td><code>AppChrome.tsx</code> — 888 LOC, AppChromeProps with 20+ fields; <code>AppChrome.module.css</code> — 32 uses of <code>var()</code> locally.</td>
+          <td>−20% on navigation features</td>
+          <td>Regressions in Tauri chrome</td>
+          <td>0.2 PM</td>
+          <td>Slow dev onboarding on shell</td>
+          <td>1–2 weeks — extract TopNav, CompanyNav, TitleBarOverlay</td>
+        </tr>
+        <tr>
+          <td><span class="nivel-tag media">Medium</span></td>
+          <td class="col-ap">AP-07</td>
+          <td class="col-name">Inline styles with magic values</td>
+          <td><code>style={{ }}</code> on reusable components with literal colors/dimensions.</td>
+          <td>17 <code>.tsx</code> files — DashboardSection (8), InvoiceDocumentModal (5), FunnelChart (4), PipelineBoardView (3), among others.</td>
+          <td>Styles not searchable in CSS</td>
+          <td>Hard to snapshot visually</td>
+          <td>0.05 PM</td>
+          <td>Low at pre-seed if limited to dynamic charts</td>
+          <td>2–3 days — migrate static styles to <code>.module.css</code></td>
+        </tr>
+        <tr>
+          <td><span class="nivel-tag baja">Low</span></td>
+          <td class="col-ap">AP-08</td>
+          <td class="col-name">Domain tokens (quotes) — acceptable</td>
+          <td><code>--qt-*</code> in <code>quote-document-base.css</code> are component-scoped for A4 print — valid pattern if they do not leak.</td>
+          <td><code>quote-document-base.css</code>, <code>quote-document-budget.css</code> — 20+ local tokens, coherent use in PDF.</td>
+          <td>Neutral</td>
+          <td>Isolated from shell</td>
+          <td>Minimal</td>
+          <td>Only if <code>--qt-ink</code> is used outside quotes</td>
+          <td>0 — document as exception</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-heading">What not to touch now</h2>
+
+  <div class="not-touch-card">
+    <div class="nt-title">Migrate the entire app to Tailwind v4</div>
+    <div class="nt-reason">Tailwind is in package.json but without @apply or classes in src. The current stack (CSS Modules + DS) works and fits Tauri. Migrating now would duplicate paradigms.</div>
+    <div class="nt-when"><strong>When to reconsider:</strong> if you hire a dev who only works utility-first, or you need automated design tokens → Tailwind theme sync.</div>
+  </div>
+  <div class="not-touch-card">
+    <div class="nt-title">Hybrid 3-level architecture (primitive → semantic → component)</div>
+    <div class="nt-reason">With 11 global tokens and 1 brand, adding blue-500 + color-text-primary + button-bg is overhead without multi-product or active dark mode.</div>
+    <div class="nt-when"><strong>When to reconsider:</strong> dark mode on the roadmap, white-label, or a second product with a distinct identity.</div>
+  </div>
+  <div class="not-touch-card">
+    <div class="nt-title">Storybook / formal component documentation</div>
+    <div class="nt-reason">At pre-seed with 1 designer-owner, the cost of maintaining Storybook outweighs the benefit. The DS is CSS-first, not a React library.</div>
+    <div class="nt-when"><strong>When to reconsider:</strong> third frontend dev or first external UI contractor.</div>
+  </div>
+  <div class="not-touch-card">
+    <div class="nt-title">Massive section refactor (DealFinancePanel 819 LOC)</div>
+    <div class="nt-reason">These are product screens, not DS primitives. Splitting AppChrome has more ROI than stable business sections.</div>
+    <div class="nt-when"><strong>When to reconsider:</strong> when DealFinancePanel changes every sprint or breaks tests.</div>
+  </div>
+
+  <h2 class="section-heading">Action plan</h2>
+  <p class="action-plan-summary"><strong>0.5 PM</strong> · <strong>4–6 weeks</strong> · ~20% time (1 day/week)</p>
+  <div class="steps-panel block">
+    <ul class="action-plan-list">
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Add script <code>sync:ds-css</code> — copy <code>design-system/src/css</code> → <code>service-web/assets/css</code> on prebuild</span>
+        <span class="step-period">this week</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Remove manual drift in <code>tokens.css</code> (<code>--font-serif</code>, <code>--background</code>)</span>
+        <span class="step-period">this week</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">CI check: diff <code>design-system</code> vs <code>service-web/assets/css</code></span>
+        <span class="step-period">this week</span>
+      </li>
+      <li class="step-note">
+        <span class="step-task">⚠ Risk: break relative paths on static landing — test with <code>python -m http.server</code></span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Document in playbook that <code>--qt-*</code> is quotes domain (AP-08 exception)</span>
+        <span class="step-period">this week</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Open issue: unify <code>--score-fill</code> with brand token</span>
+        <span class="step-period">this week</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Deprecate <code>--color-primary*</code> → use <code>--ink</code> / new <code>--color-accent</code></span>
+        <span class="step-period">week 1–2</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Map <code>--score-fill</code> to <code>var(--color-accent)</code> in <code>tokens.css</code></span>
+        <span class="step-period">week 1–2</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Replace loose <code>rgba(17,17,17,*)</code> with <code>var(--border)</code> / <code>var(--muted)</code></span>
+        <span class="step-period">week 1–2</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Target: &lt;25% literals in <code>app/src</code></span>
+        <span class="step-period">week 1–2</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Migrate 5 highest-impact static inline styles (Dashboard, Invoice)</span>
+        <span class="step-period">week 1–2</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Extend <code>check-local-refs.mjs</code> for <code>tokens.css</code></span>
+        <span class="step-period">week 1–2</span>
+      </li>
+      <li class="step-note">
+        <span class="step-task">⚠ Risk (tokens): low if values mapped 1:1 — minimal visual change</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Extract <code>AppTitleBar</code>, <code>AppGlobalNav</code>, <code>AppCompanyNav</code> from <code>AppChrome</code></span>
+        <span class="step-period">week 3+</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Reduce <code>AppChromeProps</code> — composition in <code>useAppShell</code></span>
+        <span class="step-period">week 3+</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Target: <code>AppChrome</code> &lt; 350 LOC</span>
+        <span class="step-period">week 3+</span>
+      </li>
+      <li class="step-note">
+        <span class="step-task">⚠ Risk: Tauri titlebar regressions — manual QA on macOS</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Re-audit with Design System Auditor — target score ≥75</span>
+        <span class="step-period">week 3+</span>
+      </li>
+      <li>
+        <span class="task-check" aria-hidden="true"></span>
+        <span class="step-task">Validate Phase 0 answers (team, rebrand roadmap) to refine ROI</span>
+        <span class="step-period">week 3+</span>
+      </li>
+    </ul>
+  </div>
+
+  <h2 class="section-heading">Post-implementation metrics</h2>
+
+  <div class="metrics-panel block">
+    <div class="metrics-head">
+      <span>Metrics</span>
+      <span>Before</span>
+      <span>After</span>
+      <span>Parameter</span>
+    </div>
+    <div class="metrics-row">
+      <span>% literal values (hex/px) in app/src</span>
+      <span class="metric-before">43%</span>
+      <span class="metric-after">&lt;25%</span>
+      <span class="metric-how">grep -c hex vs var() in weekly CI</span>
+    </div>
+    <div class="metrics-row">
+      <span>CSS token sources</span>
+      <span class="metric-before">3</span>
+      <span class="metric-after">1 (+ documented locals)</span>
+      <span class="metric-how">diff design-system vs service-web in Actions</span>
+    </div>
+    <div class="metrics-row">
+      <span>Files with inline style={{}}</span>
+      <span class="metric-before">17</span>
+      <span class="metric-after">&lt;8</span>
+      <span class="metric-how">wc -l in pre-commit or lint script</span>
+    </div>
+    <div class="metrics-row">
+      <span>Global tokens in :root</span>
+      <span class="metric-before">11</span>
+      <span class="metric-after">18–22</span>
+      <span class="metric-how">Count definitions in design-system/tokens.css</span>
+    </div>
+    <div class="metrics-row">
+      <span>Composite auditor score</span>
+      <span class="metric-before">62</span>
+      <span class="metric-after">≥75</span>
+      <span class="metric-how">Re-run Design System Auditor in Nov 2026</span>
+    </div>
+  </div>
+
+  <section class="download-block block" aria-labelledby="download-heading">
+    <h2 class="section-heading" id="download-heading">Continue in your editor</h2>
+    <p class="download-intro">Download the actionable plan as Markdown — use it in Cursor or Claude with <code>@audit-result.md</code>.</p>
+    <div class="download-actions">
+      <button type="button" class="download-btn" id="download-audit-md">Download audit-result.md</button>
+      <a class="download-link" href="audit-result.md" download="audit-result.md">Open audit-result.md</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title"><span>09</span>Scope and limitations</h2>
+    <div class="scope-grid">
+      <div class="scope-col">
+        <h4>Covered</h4>
+        <ul>
+          <li class="covered">Tokens and abstraction strategy</li>
+          <li class="covered">Token architecture (design-system, app, service-web)</li>
+          <li class="covered">Anti-patterns in definition and use</li>
+          <li class="covered">Health score ponderado (3 ejes)</li>
+          <li class="covered">Component architecture (LOC, inline styles, God Component)</li>
+        </ul>
+      </div>
+      <div class="scope-col">
+        <h4>Not covered</h4>
+        <ul>
+          <li class="excluded">WCAG accessibility (separate audit)</li>
+          <li class="excluded">Performance CSS / bundle Tauri</li>
+          <li class="excluded">Figma ↔ code</li>
+          <li class="excluded">Detailed organizational governance</li>
+          <li class="excluded">Rust / SQLite backend</li>
+        </ul>
+      </div>
+    </div>
+    <p class="scope-note"><strong>Phase 0 assumptions:</strong> 1 designer, pre-seed, 2 web surfaces (Tauri app + service-web) — revalidate when scaling the team or adding native mobile.</p>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title"><span>10</span>Signature and methodology</h2>
+    <div class="signature">
+      <div class="sig-left">
+        <div class="auditor-name">Matias Rizzo</div>
+        <div class="auditor-org">Design System Auditor</div>
+        <div class="auditor-email">Design-system-matrix · SKILL.md</div>
+      </div>
+      <div class="sig-right">
+        <div class="sig-detail">Date: May 18, 2026</div>
+        <div class="sig-detail">Methodology: Design System Auditor · 6 phases</div>
+        <div class="sig-version">Design System Auditor v1.0</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+<script type="text/plain" id="audit-md-source">
+# Design System Audit — Follow
+
+**Date:** May 18, 2026 · **Score:** 62 / 100 (Acceptable)  
+**Phase:** Pre-seed · **Team:** 1 designer · **Surfaces:** Tauri app + service-web (web)
+
+---
+
+## Recommendation
+
+Given you're **pre-seed**, with **one designer**, **two web surfaces** (Tauri app + service-web), and **no native mobile** on the roadmap, you should stay on **semantic-first (mature) + clean centralized** — not a full primitive hybrid yet — because a single brand and tokens like `--ink` / `--bg` already fit your stack, while today's real cost is drift between `design-system/` and the manual copy in `service-web`, not missing gray scales.
+
+**Move to the next level only when:** dark mode in the next 6 months, a confirmed rebrand, or a second product with its own visual identity.
+
+---
+
+## Target model
+
+| | Current | Target |
+|---|---------|--------|
+| **Overall** | Semantic-first (immature) + unstable centralized hybrid | Semantic-first (mature) + clean centralized |
+| **Tokens** | Semantic-first (immature) | Semantic-first (mature) |
+| **Architecture** | Centralized + co-located (hybrid) | Clean centralized |
+
+---
+
+## Priority anti-patterns
+
+### AP-05 — Fragmented token sources (High)
+
+- **Where:** `design-system/src/css/base/tokens.css`, `app/src/index.css`, `service-web/assets/css/base/tokens.css`
+- **Fix direction:** Single source of truth + sync script
+
+### AP-01 — Mixed levels in the same context (High)
+
+- **Where:** `--ink` vs `--color-primary` vs `#2383e2` in ScoreBar/OutreachFitGauge
+- **Fix direction:** Unify accents
+
+### AP-06 — God Component shell (Medium)
+
+- **Where:** `AppChrome.tsx` (888 LOC)
+- **Fix direction:** Split TopNav, CompanyNav, TitleBar
+
+---
+
+## Action plan
+
+**0.5 PM** · **4–6 weeks** · ~20% time (1 day/week)
+
+- [ ] Add script `sync:ds-css` — copy `design-system/src/css` → `service-web/assets/css` on prebuild — *this week*
+- [ ] Remove manual drift in `tokens.css` (`--font-serif`, `--background`) — *this week*
+- [ ] CI check: diff `design-system` vs `service-web/assets/css` — *this week*
+- ⚠ Risk: break relative paths on static landing — test with `python -m http.server`
+- [ ] Document in playbook that `--qt-*` is quotes domain (AP-08 exception) — *this week*
+- [ ] Open issue: unify `--score-fill` with brand token — *this week*
+- [ ] Deprecate `--color-primary*` → use `--ink` / new `--color-accent` — *week 1–2*
+- [ ] Map `--score-fill` to `var(--color-accent)` in `tokens.css` — *week 1–2*
+- [ ] Replace loose `rgba(17,17,17,*)` with `var(--border)` / `var(--muted)` — *week 1–2*
+- [ ] Target: <25% literals in `app/src` — *week 1–2*
+- [ ] Migrate 5 highest-impact static inline styles (Dashboard, Invoice) — *week 1–2*
+- [ ] Extend `check-local-refs.mjs` for `tokens.css` — *week 1–2*
+- ⚠ Risk (tokens): low if values mapped 1:1 — minimal visual change
+- [ ] Extract `AppTitleBar`, `AppGlobalNav`, `AppCompanyNav` from `AppChrome` — *week 3+*
+- [ ] Reduce `AppChromeProps` — composition in `useAppShell` — *week 3+*
+- [ ] Target: `AppChrome` < 350 LOC — *week 3+*
+- ⚠ Risk: Tauri titlebar regressions — manual QA on macOS
+- [ ] Re-audit with Design System Auditor — target score ≥75 — *week 3+*
+- [ ] Validate Phase 0 answers (team, rebrand roadmap) to refine ROI — *week 3+*
+
+---
+
+## Do not do now
+
+### Migrate the entire app to Tailwind v4
+
+**Why not:** Tailwind is in package.json but unused; CSS Modules + DS fits Tauri. Migrating now duplicates paradigms.
+
+**Reconsider when:** you hire a utility-first-only dev, or need automated tokens → Tailwind theme sync.
+
+### Hybrid 3-level architecture (primitive → semantic → component)
+
+**Why not:** 11 global tokens and 1 brand — primitive scales are overhead without multi-product or active dark mode.
+
+**Reconsider when:** dark mode on roadmap, white-label, or second product with distinct identity.
+
+### Storybook / formal component documentation
+
+**Why not:** At pre-seed with 1 designer-owner, Storybook cost outweighs benefit. DS is CSS-first.
+
+**Reconsider when:** third frontend dev or first external UI contractor.
+
+### Massive section refactor (DealFinancePanel 819 LOC)
+
+**Why not:** Product screens, not DS primitives. Splitting AppChrome has more ROI.
+
+**Reconsider when:** DealFinancePanel changes every sprint or breaks tests.
+
+---
+
+## Success metrics (post-implementation)
+
+| Metric | Before | After | How to measure |
+|--------|--------|-------|----------------|
+| % literal values in app/src | 43% | <25% | grep hex vs var() in weekly CI |
+| CSS token sources | 3 | 1 (+ documented locals) | diff design-system vs service-web in Actions |
+| Files with inline `style={{}}` | 17 | <8 | pre-commit or lint script |
+| Global tokens in :root | 11 | 18–22 | count in `design-system/tokens.css` |
+| Composite auditor score | 62 | ≥75 | re-run auditor Nov 2026 |
+
+---
+
+*Generated by Design System Auditor v1.0 · Full visual report: `result-page.html`*
+</script>
+<script>
+(function () {
+  const btn = document.getElementById("download-audit-md");
+  if (!btn) return;
+  btn.addEventListener("click", async function () {
+    let md = "";
+    try {
+      const res = await fetch("audit-result.md", { cache: "no-store" });
+      if (res.ok) md = await res.text();
+    } catch (_) {}
+    if (!md) {
+      const el = document.getElementById("audit-md-source");
+      if (el) md = el.textContent.trim();
+    }
+    if (!md) {
+      alert("Could not load audit-result.md. Open it from the same folder as this HTML file.");
+      return;
+    }
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audit-result.md";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+</body>
+</html>

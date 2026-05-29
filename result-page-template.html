@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audit DS — [[CLIENT_NAME]]</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --c-bg: #0f0f0f;
+      --c-surface: #1a1a1a;
+      --c-surface-2: #242424;
+      --c-border: #2e2e2e;
+      --c-text: #e8e8e8;
+      --c-text-muted: #888;
+      --c-text-faint: #555;
+
+      --c-green: #22c55e;
+      --c-green-bg: #052e16;
+      --c-yellow: #eab308;
+      --c-yellow-bg: #2a2000;
+      --c-red: #ef4444;
+      --c-red-bg: #2d0a0a;
+      --c-blue: #3b82f6;
+      --c-blue-bg: #0d1b3e;
+
+      --c-score-excellent: #22c55e;
+      --c-score-good: #84cc16;
+      --c-score-ok: #eab308;
+      --c-score-problems: #f97316;
+      --c-score-bad: #ef4444;
+
+      --radius: 0px;
+      --radius-lg: 0px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: "Roboto", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      padding: 40px 24px 80px;
+    }
+
+    h1, h2, h3 {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-weight: 400;
+    }
+
+    a { color: var(--c-blue); text-decoration: none; }
+
+    /* ── Layout ── */
+    .page { max-width: 900px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .report-header {
+      padding-bottom: 32px;
+      margin-bottom: 48px;
+    }
+    .report-header .meta {
+      font-size: 13px;
+      color: var(--c-text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .report-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .report-header .subtitle {
+      font-size: 17px;
+      color: var(--c-text-muted);
+    }
+    .header-cols {
+      display: flex;
+      gap: 32px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .header-col dt {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-text-faint);
+      margin-bottom: 2px;
+    }
+    .header-col dd {
+      font-size: 15px;
+      color: var(--c-text);
+    }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 56px; }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--c-text-faint);
+      margin-bottom: 20px;
+    }
+    .section-title span {
+      color: var(--c-text-muted);
+      font-weight: 400;
+      margin-right: 12px;
+    }
+
+    /* ── Executive Summary ── */
+    .exec-summary {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+    }
+    .exec-summary p {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--c-text);
+      margin-bottom: 8px;
+    }
+    .exec-summary p:last-child { margin-bottom: 0; }
+
+    /* ── Score Hero ── */
+    .score-hero {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      padding: 32px 36px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .score-number-wrap { text-align: center; min-width: 120px; }
+    .score-number {
+      font-size: 72px;
+      font-weight: 800;
+      line-height: 1;
+      /* color set inline by JS-free class */
+    }
+    .score-number.excellent { color: var(--c-score-excellent); }
+    .score-number.good      { color: var(--c-score-good); }
+    .score-number.ok        { color: var(--c-score-ok); }
+    .score-number.problems  { color: var(--c-score-problems); }
+    .score-number.bad       { color: var(--c-score-bad); }
+
+    .score-label {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .score-label.excellent { color: var(--c-score-excellent); }
+    .score-label.good      { color: var(--c-score-good); }
+    .score-label.ok        { color: var(--c-score-ok); }
+    .score-label.problems  { color: var(--c-score-problems); }
+    .score-label.bad       { color: var(--c-score-bad); }
+
+    .score-meta { flex: 1; min-width: 200px; }
+    .score-meta .company-phase {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-border);
+      color: var(--c-text-muted);
+      margin-bottom: 12px;
+    }
+    .score-meta .judgment {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .score-meta .action-text {
+      font-size: 15px;
+      color: var(--c-text-muted);
+    }
+
+    /* ── Sub-scores ── */
+    .subscores {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .subscores { grid-template-columns: 1fr; }
+    }
+    .subscore-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .subscore-card .axis-name {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--c-text-muted);
+      margin-bottom: 10px;
+    }
+    .subscore-card .axis-score {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .subscore-card .axis-weight {
+      font-size: 13px;
+      color: var(--c-text-faint);
+      margin-bottom: 12px;
+    }
+    .score-bar-track {
+      height: 4px;
+      background: var(--c-border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+    .subscore-card .axis-impact {
+      font-size: 14px;
+      color: var(--c-text-muted);
+      line-height: 1.4;
+    }
+
+    /* ── Diagnosis ── */
+    .model-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .model-badge {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      flex: 1;
+      min-width: 200px;
+    }
+    .model-badge .badge-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--c-text-faint);
+      margin-bottom: 6px;
+    }
+    .model-badge .badge-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .model-badge .badge-evidence {
+      font-size: 14px;
+      color: var(--c-text-muted);
+      font-family: "SF Mono", "Fira Code", monospace;
+      word-break: break-all;
+    }
+
+    .reference-block {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .reference-block .ref-intro {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      margin-bottom: 8px;
+    }
+    .reference-block .ref-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .diff-list { list-style: none; }
+    .diff-list li {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--c-border);
+      display: flex;
+      gap: 8px;
+    }
+    .diff-list li:last-child { border-bottom: none; }
+    .diff-list li::before {
+      content: "↳";
+      color: var(--c-text-faint);
+      flex-shrink: 0;
+    }
+
+    /* ── Anti-patterns ── */
+    .ap-card {
+      border-radius: var(--radius);
+      border: 1px solid;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .ap-card.red    { background: var(--c-red-bg);    border-color: #5a1a1a; }
+    .ap-card.yellow { background: var(--c-yellow-bg); border-color: #4a3800; }
+    .ap-card.green  { background: var(--c-green-bg);  border-color: #0a3a1a; }
+
+    .ap-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .ap-severity {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .ap-card.red    .ap-severity { background: var(--c-red);    color: #fff; }
+    .ap-card.yellow .ap-severity { background: var(--c-yellow); color: #000; }
+    .ap-card.green  .ap-severity { background: var(--c-green);  color: #000; }
+
+    .ap-code {
+      font-size: 13px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      color: var(--c-text-faint);
+      padding: 2px 6px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 3px;
+    }
+    .ap-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .ap-section-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-text-faint);
+      margin-top: 14px;
+      margin-bottom: 4px;
+    }
+    .ap-text {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      line-height: 1.5;
+    }
+    .ap-impact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 6px;
+    }
+    @media (max-width: 500px) {
+      .ap-impact-grid { grid-template-columns: 1fr; }
+    }
+    .impact-item {
+      background: rgba(0,0,0,0.25);
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .impact-item .impact-key {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--c-text-faint);
+      margin-bottom: 3px;
+    }
+    .impact-item .impact-val {
+      font-size: 15px;
+      color: var(--c-text);
+    }
+    .ap-effort {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--c-text-muted);
+      background: rgba(0,0,0,0.2);
+      border-radius: 4px;
+      padding: 4px 10px;
+    }
+
+    /* ── What NOT to touch ── */
+    .not-touch-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-left: 3px solid var(--c-yellow);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+    }
+    .not-touch-card .nt-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .not-touch-card .nt-reason {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      margin-bottom: 8px;
+    }
+    .not-touch-card .nt-when {
+      font-size: 14px;
+      color: var(--c-text-faint);
+    }
+    .not-touch-card .nt-when strong {
+      color: var(--c-text-muted);
+    }
+
+    /* ── Plan ── */
+    .plan-phase {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 12px;
+    }
+    .plan-phase-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .phase-num {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      color: var(--c-text-muted);
+      margin-top: 2px;
+    }
+    .plan-phase-header .phase-info .phase-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .plan-phase-header .phase-info .phase-duration {
+      font-size: 14px;
+      color: var(--c-text-muted);
+      margin-top: 2px;
+    }
+    .plan-task-list { list-style: none; }
+    .plan-task-list li {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      padding: 5px 0;
+      padding-left: 16px;
+      position: relative;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .plan-task-list li:last-child { border-bottom: none; }
+    .plan-task-list li::before {
+      content: "·";
+      position: absolute;
+      left: 4px;
+      color: var(--c-text-faint);
+    }
+    .plan-deliverables {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--c-border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .deliverable-tag {
+      font-size: 14px;
+      background: var(--c-surface-2);
+      border: 1px solid var(--c-border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      color: var(--c-text-muted);
+    }
+    .plan-risk {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--c-yellow);
+      opacity: 0.8;
+    }
+    .plan-risk::before { content: "⚠ "; }
+
+    .effort-summary {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .effort-item dt {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-text-faint);
+      margin-bottom: 4px;
+    }
+    .effort-item dd {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* ── ROI ── */
+    .roi-hero {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) {
+      .roi-hero { grid-template-columns: 1fr; }
+    }
+    .roi-stat {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .roi-stat .roi-label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-text-faint);
+      margin-bottom: 8px;
+    }
+    .roi-stat .roi-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--c-green);
+    }
+    .roi-stat .roi-sub {
+      font-size: 14px;
+      color: var(--c-text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Tables ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+    .data-table th {
+      text-align: left;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-text-faint);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--c-border);
+      color: var(--c-text-muted);
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .val-highlight {
+      color: var(--c-text);
+      font-weight: 500;
+    }
+
+    /* ── Benchmarks ── */
+    .benchmark-row {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+    }
+    .benchmark-row:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+    .benchmark-row:last-child  { border-radius: 0 0 var(--radius) var(--radius); border-bottom: 1px solid var(--c-border); }
+
+    /* ── Metrics ── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+    }
+    .metric-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .metric-card .metric-name {
+      font-size: 14px;
+      color: var(--c-text-muted);
+      margin-bottom: 8px;
+    }
+    .metric-values {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .metric-before {
+      font-size: 15px;
+      color: var(--c-text-faint);
+      text-decoration: line-through;
+    }
+    .metric-arrow { color: var(--c-text-faint); font-size: 14px; }
+    .metric-target {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--c-green);
+    }
+    .metric-how {
+      font-size: 13px;
+      color: var(--c-text-faint);
+    }
+
+    /* ── Next steps ── */
+    .steps-group {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 12px;
+    }
+    .steps-group .step-period {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--c-text-faint);
+      margin-bottom: 12px;
+    }
+    .steps-group ol {
+      padding-left: 18px;
+    }
+    .steps-group ol li {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    /* ── Footer / Signature ── */
+    .signature {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .sig-left .auditor-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .sig-left .auditor-org {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      margin-bottom: 2px;
+    }
+    .sig-left .auditor-email {
+      font-size: 14px;
+      color: var(--c-blue);
+    }
+    .sig-right { text-align: right; }
+    .sig-right .sig-detail {
+      font-size: 14px;
+      color: var(--c-text-faint);
+      margin-bottom: 4px;
+    }
+    .sig-right .sig-version {
+      font-size: 13px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      color: var(--c-text-faint);
+    }
+
+    /* ── Scope / Limitations ── */
+    .scope-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .scope-grid { grid-template-columns: 1fr; }
+    }
+    .scope-col {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .scope-col h4 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--c-text-faint);
+      margin-bottom: 10px;
+    }
+    .scope-col ul { list-style: none; }
+    .scope-col ul li {
+      font-size: 15px;
+      color: var(--c-text-muted);
+      padding: 4px 0;
+    }
+    .scope-col ul li.covered::before  { content: "✓ "; color: var(--c-green); }
+    .scope-col ul li.excluded::before { content: "✗ "; color: var(--c-red); opacity: 0.6; }
+
+    @media print {
+      body { background: #fff; color: #111; padding: 20px; }
+      :root {
+        --c-bg: #fff; --c-surface: #f5f5f5; --c-surface-2: #eee;
+        --c-border: #ddd; --c-text: #111; --c-text-muted: #444; --c-text-faint: #888;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ HEADER ══ -->
+  <header class="report-header">
+    <div class="meta">Design System Audit · [[AUDIT_VERSION]]</div>
+    <h1>[[CLIENT_NAME]]</h1>
+    <p class="subtitle">Diagnóstico de madurez del Design System</p>
+    <div class="header-cols">
+      <dl class="header-col">
+        <dt>Fecha</dt>
+        <dd>[[AUDIT_DATE]]</dd>
+      </dl>
+      <dl class="header-col">
+        <dt>Auditor</dt>
+        <dd>[[AUDITOR_NAME]]</dd>
+      </dl>
+      <dl class="header-col">
+        <dt>Organización</dt>
+        <dd>[[AUDITOR_ORG]]</dd>
+      </dl>
+      <dl class="header-col">
+        <dt>Fase de empresa</dt>
+        <dd>[[COMPANY_PHASE]]</dd>
+      </dl>
+      <dl class="header-col">
+        <dt>Próxima revisión</dt>
+        <dd>[[NEXT_REVIEW_DATE]]</dd>
+      </dl>
+    </div>
+  </header>
+
+  <!-- ══ 0. RESUMEN EJECUTIVO ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>00</span>Resumen Ejecutivo</h2>
+    <div class="exec-summary">
+      <p>[[EXEC_LINE_1]]</p>
+      <p>[[EXEC_LINE_2]]</p>
+      <p>[[EXEC_LINE_3]]</p>
+    </div>
+  </section>
+
+  <!-- ══ 1. SCORE ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>01</span>Score de Salud</h2>
+
+    <div class="score-hero">
+      <div class="score-number-wrap">
+        <div class="score-number [[SCORE_CLASS]]">[[SCORE_GLOBAL]]</div>
+        <div class="score-label [[SCORE_CLASS]]">[[SCORE_LABEL]]</div>
+      </div>
+      <div class="score-meta">
+        <div class="company-phase">[[COMPANY_PHASE]]</div>
+        <div class="judgment">[[SCORE_JUDGMENT]]</div>
+        <div class="action-text">[[SCORE_ACTION]]</div>
+      </div>
+    </div>
+
+    <div class="subscores">
+      <!-- Tokens -->
+      <div class="subscore-card">
+        <div class="axis-name">Tokens</div>
+        <div class="axis-score" style="color: [[TOKEN_SCORE_COLOR]]">[[TOKEN_SCORE]]</div>
+        <div class="axis-weight">Peso: 50%</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width: [[TOKEN_SCORE]]%; background: [[TOKEN_SCORE_COLOR]]"></div>
+        </div>
+        <div class="axis-impact">[[TOKEN_IMPACT]]</div>
+      </div>
+      <!-- Componentes -->
+      <div class="subscore-card">
+        <div class="axis-name">Componentes</div>
+        <div class="axis-score" style="color: [[COMP_SCORE_COLOR]]">[[COMP_SCORE]]</div>
+        <div class="axis-weight">Peso: 30%</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width: [[COMP_SCORE]]%; background: [[COMP_SCORE_COLOR]]"></div>
+        </div>
+        <div class="axis-impact">[[COMP_IMPACT]]</div>
+      </div>
+      <!-- Arquitectura -->
+      <div class="subscore-card">
+        <div class="axis-name">Arquitectura</div>
+        <div class="axis-score" style="color: [[ARCH_SCORE_COLOR]]">[[ARCH_SCORE]]</div>
+        <div class="axis-weight">Peso: 20%</div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width: [[ARCH_SCORE]]%; background: [[ARCH_SCORE_COLOR]]"></div>
+        </div>
+        <div class="axis-impact">[[ARCH_IMPACT]]</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 2. DIAGNÓSTICO TÉCNICO ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>02</span>Diagnóstico Técnico</h2>
+
+    <div class="model-row">
+      <div class="model-badge">
+        <div class="badge-label">Estrategia de Tokens</div>
+        <div class="badge-value">[[TOKEN_MODEL]]</div>
+        <div class="badge-evidence">[[TOKEN_MODEL_EVIDENCE]]</div>
+      </div>
+      <div class="model-badge">
+        <div class="badge-label">Arquitectura de Código</div>
+        <div class="badge-value">[[ARCH_MODEL]]</div>
+        <div class="badge-evidence">[[ARCH_MODEL_EVIDENCE]]</div>
+      </div>
+    </div>
+
+    <div class="reference-block">
+      <div class="ref-intro">Tu sistema se parece más a:</div>
+      <div class="ref-name">[[REFERENCE_COMPANY]]</div>
+      <ul class="diff-list">
+        [[DIFF_ITEMS]]
+        <!-- Formato esperado para cada item:
+        <li>[[DIFERENCIA_1]]</li>
+        <li>[[DIFERENCIA_2]]</li>
+        -->
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 3. ANTI-PATRONES ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>03</span>Anti-patrones Detectados</h2>
+
+    [[ANTIPATTERNS_HTML]]
+    <!--
+    Formato esperado para cada anti-patrón:
+    <div class="ap-card [red|yellow|green]">
+      <div class="ap-header">
+        <span class="ap-severity">[Alta|Media|Baja]</span>
+        <span class="ap-code">AP-XX</span>
+        <span class="ap-name">Nombre del anti-patrón</span>
+      </div>
+      <div class="ap-section-label">Qué es</div>
+      <div class="ap-text">Descripción técnica</div>
+      <div class="ap-section-label">Dónde aparece</div>
+      <div class="ap-text">N instancias — rutas/archivos</div>
+      <div class="ap-section-label">Impacto de negocio</div>
+      <div class="ap-impact-grid">
+        <div class="impact-item">
+          <div class="impact-key">Velocidad</div>
+          <div class="impact-val">−X% en cambios visuales</div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-key">QA</div>
+          <div class="impact-val">+X horas por ciclo</div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-key">Deuda técnica</div>
+          <div class="impact-val">X person-months para limpiar</div>
+        </div>
+        <div class="impact-item">
+          <div class="impact-key">Riesgo</div>
+          <div class="impact-val">Si no se arregla: X</div>
+        </div>
+      </div>
+      <span class="ap-effort">Esfuerzo: X semanas con Y personas</span>
+    </div>
+    -->
+  </section>
+
+  <!-- ══ 4. QUÉ NO TOCAR ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>04</span>Qué No Tocar Ahora</h2>
+
+    [[NOT_TOUCH_HTML]]
+    <!--
+    Formato esperado para cada item:
+    <div class="not-touch-card">
+      <div class="nt-title">[[PROPUESTA_TENTADORA]]</div>
+      <div class="nt-reason">[[RAZÓN_TÉCNICA_Y_CONTEXTO]]</div>
+      <div class="nt-when"><strong>Cuándo reconsiderar:</strong> [[CONDICIÓN]]</div>
+    </div>
+    -->
+  </section>
+
+  <!-- ══ 5. PLAN DE CAMBIOS ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>05</span>Plan de Cambios</h2>
+
+    [[PLAN_PHASES_HTML]]
+    <!--
+    Formato esperado para cada fase:
+    <div class="plan-phase">
+      <div class="plan-phase-header">
+        <span class="phase-num">Fase 1</span>
+        <div class="phase-info">
+          <div class="phase-name">[[NOMBRE_FASE]]</div>
+          <div class="phase-duration">[[X semanas / Y meses]]</div>
+        </div>
+      </div>
+      <ul class="plan-task-list">
+        <li>[[Tarea 1]] — [[Esfuerzo, Owner]]</li>
+        <li>[[Tarea 2]] — [[Esfuerzo, Owner]]</li>
+      </ul>
+      <div class="plan-deliverables">
+        <span class="deliverable-tag">[[Entregable 1]]</span>
+        <span class="deliverable-tag">[[Entregable 2]]</span>
+      </div>
+      <div class="plan-risk">[[Riesgo principal]]</div>
+    </div>
+    -->
+
+    <div class="effort-summary">
+      <dl class="effort-item">
+        <dt>Person-months</dt>
+        <dd>[[TOTAL_PM]]</dd>
+      </dl>
+      <dl class="effort-item">
+        <dt>Duración (calendario)</dt>
+        <dd>[[CALENDAR_DURATION]]</dd>
+      </dl>
+      <dl class="effort-item">
+        <dt>Dedicación recomendada</dt>
+        <dd>[[DEDICATION]]</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ══ 6. ROI ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>06</span>Estimación de ROI</h2>
+
+    <div class="roi-hero">
+      <div class="roi-stat">
+        <div class="roi-label">Ahorro anual proyectado</div>
+        <div class="roi-value">[[ROI_ANNUAL_SAVING]]</div>
+        <div class="roi-sub">diseño + dev + QA + TTM</div>
+      </div>
+      <div class="roi-stat">
+        <div class="roi-label">Payback period</div>
+        <div class="roi-value">[[ROI_PAYBACK]]</div>
+        <div class="roi-sub">meses para recuperar inversión</div>
+      </div>
+      <div class="roi-stat">
+        <div class="roi-label">ROI año 1</div>
+        <div class="roi-value">[[ROI_YEAR1]]</div>
+        <div class="roi-sub">sobre costo de implementación</div>
+      </div>
+    </div>
+
+    <table class="data-table" style="background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius);">
+      <thead>
+        <tr>
+          <th>Área</th>
+          <th>Ahorro estimado/año</th>
+          <th>Supuesto base</th>
+          <th>Referencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        [[ROI_TABLE_ROWS]]
+        <!--
+        Formato esperado para cada fila:
+        <tr>
+          <td class="val-highlight">Diseño</td>
+          <td>€[[X]]</td>
+          <td>[[Supuesto]]</td>
+          <td>[[Empresa, DS-Real-Cases]]</td>
+        </tr>
+        -->
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ══ 7. MÉTRICAS POST-IMPLEMENTACIÓN ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>07</span>Métricas a Medir Post-Implementación</h2>
+    <div class="metrics-grid">
+      [[METRICS_CARDS_HTML]]
+      <!--
+      Formato esperado para cada métrica:
+      <div class="metric-card">
+        <div class="metric-name">[[Nombre métrica]]</div>
+        <div class="metric-values">
+          <span class="metric-before">[[Baseline]]</span>
+          <span class="metric-arrow">→</span>
+          <span class="metric-target">[[Target 6 meses]]</span>
+        </div>
+        <div class="metric-how">[[Cómo medir]]</div>
+      </div>
+      -->
+    </div>
+  </section>
+
+  <!-- ══ 8. PRÓXIMOS PASOS ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>08</span>Próximos Pasos</h2>
+
+    [[NEXT_STEPS_HTML]]
+    <!--
+    Formato esperado:
+    <div class="steps-group">
+      <div class="step-period">Esta semana</div>
+      <ol>
+        <li>[[Paso 1]]</li>
+        <li>[[Paso 2]]</li>
+      </ol>
+    </div>
+    <div class="steps-group">
+      <div class="step-period">Semana 1–2</div>
+      <ol>
+        <li>[[Paso 1]]</li>
+      </ol>
+    </div>
+    -->
+  </section>
+
+  <!-- ══ 9. SCOPE Y LIMITACIONES ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>09</span>Scope y Limitaciones</h2>
+    <div class="scope-grid">
+      <div class="scope-col">
+        <h4>Cubierto</h4>
+        <ul>
+          <li class="covered">Tokens y estrategia de abstracción</li>
+          <li class="covered">Arquitectura de tokens</li>
+          <li class="covered">Anti-patrones en definición y uso</li>
+          <li class="covered">Score de salud ponderado</li>
+          <li class="covered">Arquitectura de componentes</li>
+        </ul>
+      </div>
+      <div class="scope-col">
+        <h4>No cubierto</h4>
+        <ul>
+          <li class="excluded">Accesibilidad (WCAG — audit separado recomendado)</li>
+          <li class="excluded">Performance de CSS / bundle size</li>
+          <li class="excluded">Tooling y pipelines de build</li>
+          <li class="excluded">Procesos de gobernanza detallados</li>
+          <li class="excluded">Backend / infraestructura</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 10. FIRMA ══ -->
+  <section class="section">
+    <h2 class="section-title"><span>10</span>Firma y Metodología</h2>
+    <div class="signature">
+      <div class="sig-left">
+        <div class="auditor-name">[[AUDITOR_NAME]]</div>
+        <div class="auditor-org">[[AUDITOR_ORG]]</div>
+        <div class="auditor-email">[[AUDITOR_EMAIL]]</div>
+      </div>
+      <div class="sig-right">
+        <div class="sig-detail">Fecha: [[AUDIT_DATE]]</div>
+        <div class="sig-detail">Metodología: Design System Auditor · 6 fases</div>
+        <div class="sig-version">[[AUDIT_VERSION]]</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
